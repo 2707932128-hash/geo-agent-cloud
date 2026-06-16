@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://example.com/sitemap.xml
+Sitemap: https://2707932128-hash.github.io/geo-agent-cloud/sitemap.xml
 
 # GEO note:
 # Keep public service pages, FAQ, docs, case studies and llms.txt accessible.
