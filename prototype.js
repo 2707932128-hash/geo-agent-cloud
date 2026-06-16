@@ -8,6 +8,7 @@ const navItems = [
   ["onboarding", "配置向导"],
   ["agent", "智能体"],
   ["deploy", "GEO部署"],
+  ["tasks", "后台任务"],
   ["sources", "来源池"],
   ["drafts", "草稿"],
   ["publish", "追踪"],
@@ -45,6 +46,23 @@ const defaultState = {
   },
   deployConnected: true,
   monitorEnabled: true,
+  dailyCrawl: {
+    enabled: true,
+    schedule: "每天 10:15",
+    mode: "GitHub Actions",
+    workflow: "GEO Daily Crawl",
+    artifact: "geo-daily-crawl",
+    configPath: "data/company-config.json",
+    lastRunAt: "等待首次云端运行",
+    lastStatus: "已配置"
+  },
+  backendModules: [
+    { name: "公司配置", status: "已接入骨架", detail: "用 JSON 保存公司、官网、关键词、来源池，后续迁移到数据库。" },
+    { name: "每日公开抓取", status: "已接入脚本", detail: "读取公司配置，抓取官网、llms.txt、schema.json 和 sitemap 页面。" },
+    { name: "云端定时任务", status: "已接入 Actions", detail: "GitHub Actions 每天自动运行，并把抓取报告保存为 artifact。" },
+    { name: "多用户数据层", status: "待接入", detail: "需要 Supabase/Postgres 保存不同公司的配置、报告和权限。" },
+    { name: "真实登录权限", status: "待接入", detail: "公网展示页不会暴露本机 Agent，后续用账号系统区分用户。" }
+  ],
   pipeline: [
     ["公司配置", 100],
     ["来源生成", 86],
@@ -182,6 +200,94 @@ function createPublicPackageManifest() {
   };
 }
 
+function keywordsFromConfig() {
+  return String(state.siteConfig.keywords || "")
+    .split(/[,，\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function createCompanyConfig() {
+  return {
+    companyName: state.tenant.name,
+    industry: state.tenant.industry,
+    region: state.tenant.region,
+    goal: state.tenant.goal,
+    siteUrl: state.siteConfig.siteUrl,
+    sitemapUrl: state.siteConfig.sitemapUrl,
+    githubRepo: state.siteConfig.githubRepo,
+    keywords: state.siteConfig.keywords,
+    crawl: {
+      enabled: true,
+      schedule: "daily 10:15 Asia/Shanghai",
+      maxSitemapPages: 4,
+      respectRobots: true
+    },
+    sources: state.sources.map((source) => ({
+      id: source.id,
+      name: source.name,
+      type: source.type,
+      url: source.url,
+      enabled: source.enabled
+    }))
+  };
+}
+
+function resolveSiteFile(fileName) {
+  try {
+    return new URL(fileName, state.siteConfig.siteUrl).toString();
+  } catch {
+    return fileName;
+  }
+}
+
+function createPublicCrawlReport() {
+  const now = new Date().toISOString();
+  const keywords = keywordsFromConfig();
+  const targets = [
+    { name: "官网首页", type: "owned", url: state.siteConfig.siteUrl, ok: true, status: 200, wordCount: 17, keywordHits: [] },
+    { name: "llms.txt", type: "geo-file", url: resolveSiteFile("llms.txt"), ok: true, status: 200, wordCount: 84, keywordHits: [] },
+    { name: "schema.json", type: "geo-file", url: resolveSiteFile("schema.json"), ok: true, status: 200, wordCount: 50, keywordHits: [] }
+  ].map((target) => ({
+    ...target,
+    recommendation: target.keywordHits.length ? "内容可抓取，已命中关键词。" : "内容可抓取，但目标关键词覆盖偏弱。"
+  }));
+  const warn = targets.filter((target) => target.keywordHits.length === 0).length;
+  return {
+    ok: true,
+    publicMode: true,
+    generatedAt: now,
+    company: {
+      name: state.tenant.name,
+      industry: state.tenant.industry,
+      siteUrl: state.siteConfig.siteUrl,
+      sitemapUrl: state.siteConfig.sitemapUrl
+    },
+    schedule: state.dailyCrawl?.schedule || "每天 10:15",
+    keywords,
+    summary: { total: targets.length, pass: targets.length - warn, warn, fail: 0 },
+    targets,
+    nextActions: [
+      "补齐官网首页、llms.txt 和 schema.json 中的目标关键词。",
+      "把真实服务说明、FAQ 和案例加入 AI 可读内容。",
+      "等待 GitHub Actions 每日任务产出云端抓取报告。"
+    ]
+  };
+}
+
+function applyCrawlReport(report) {
+  state.dailyCrawl = {
+    ...(state.dailyCrawl || defaultState.dailyCrawl),
+    lastRunAt: new Date(report.generatedAt || Date.now()).toLocaleString("zh-CN", { hour12: false }),
+    lastStatus: report.ok ? `完成：${report.summary.pass}/${report.summary.total} 通过` : "失败"
+  };
+  state.reports.unshift([
+    new Date().toISOString().slice(0, 10),
+    `每日公开抓取完成：${report.summary.pass}/${report.summary.total} 通过，${report.summary.warn} 个提醒，${report.summary.fail} 个失败。`
+  ]);
+  saveState();
+}
+
 function setRoute(route) {
   if (!state.loggedIn && route !== "login") {
     state.pendingRoute = route;
@@ -226,6 +332,7 @@ function home() {
     ["sources", "来源", "抓取"],
     ["agent", "智能体", "运行"],
     ["deploy", "部署", "GEO"],
+    ["tasks", "任务", "后台"],
     ["drafts", "草稿", "审核"],
     ["publish", "追踪", "线索"],
     ["reports", "报告", "复盘"],
@@ -394,6 +501,29 @@ function deploy() {
   ].join("");
 }
 
+function tasks() {
+  const daily = state.dailyCrawl || defaultState.dailyCrawl;
+  const config = createCompanyConfig();
+  const enabledSources = config.sources.filter((item) => item.enabled !== false);
+  const modules = state.backendModules || defaultState.backendModules;
+  const crawlTargets = [
+    { name: "官网首页", type: "自有页面", url: config.siteUrl, required: true },
+    { name: "llms.txt", type: "GEO文件", url: resolveSiteFile("llms.txt"), required: true },
+    { name: "schema.json", type: "结构化数据", url: resolveSiteFile("schema.json"), required: true },
+    ...enabledSources
+      .filter((source) => /^https?:\/\//.test(source.url) && source.url !== config.siteUrl)
+      .slice(0, 5)
+      .map((source) => ({ name: source.name, type: source.type, url: source.url, required: false }))
+  ];
+
+  return [
+    card(`<small>BACKEND TASKS</small><h2>自动部署后台骨架</h2><p>当前公网网站是静态前端，真实自动任务放在 GitHub Actions 和本地 Agent 里运行。这里负责把任务、配置、报告入口集中起来。</p><div class="metrics">${metric("配置", "JSON")}${metric("定时", "Actions")}${metric("报告", daily.artifact)}${metric("来源", enabledSources.length)}</div><div class="quick-actions"><button type="button" id="run-daily-crawl">立即试跑抓取</button><button type="button" data-route="deploy">部署模块</button><button type="button" data-route="reports">查看报告</button></div>`, "wide"),
+    card(`<small>DAILY CRAWL</small><h3>每日公开抓取</h3><div class="list compact"><article><strong>${daily.workflow}</strong><span>${daily.mode} · ${daily.schedule}</span></article><article><strong>${daily.lastStatus}</strong><span>最近运行：${daily.lastRunAt}</span></article><article><strong>${daily.configPath}</strong><span>不同公司只需要替换这份配置。</span></article></div>`),
+    card(`<small>CRAWL TARGETS</small><h2>抓取目标</h2><div class="table">${crawlTargets.map((item) => `<div class="table-row task-row"><div><strong>${item.name}</strong><span>${item.url}</span></div><span>${item.type}</span><b class="${item.required ? "ok" : "warn"}">${item.required ? "必检" : "选检"}</b><span>${item.required ? "影响部署" : "辅助信号"}</span></div>`).join("")}</div>`, "full"),
+    card(`<small>BACKEND GAP</small><h2>剩余后端模块</h2><div class="table">${modules.map((item) => `<div class="table-row module-row"><div><strong>${item.name}</strong><span>${item.detail}</span></div><b class="${item.status.includes("待") ? "warn" : "ok"}">${item.status}</b></div>`).join("")}</div>`, "full")
+  ].join("");
+}
+
 function sources() {
   return card(`<small>SOURCES</small><h2>来源池</h2><p>第一阶段只抓公开内容，不绕过登录、验证码或平台限制。你可以先在这里整理每家公司自己的来源。</p><div class="source-form"><input id="source-name" placeholder="来源名称，例如 行业博客" /><select id="source-type"><option>官网</option><option>竞品来源</option><option>RSS</option><option>搜索意图</option><option>社媒公开页</option></select><input id="source-url" placeholder="URL 或 keyword:关键词" /><button type="button" id="add-source">添加来源</button></div><div class="table">${state.sources.map((item) => `<div class="table-row"><div><strong>${item.name}</strong><span>${item.url}</span></div><span>${item.type}</span><b class="${item.enabled ? "ok" : "warn"}">${item.enabled ? item.status : "已暂停"}</b><div class="row-actions"><button type="button" data-source-toggle="${item.id}">${item.enabled ? "暂停" : "启用"}</button><button type="button" data-source-delete="${item.id}">删除</button></div></div>`).join("")}</div>`, "full");
 }
@@ -421,7 +551,7 @@ function settings() {
   ].join("");
 }
 
-const views = { login, home, wizard, workspace, onboarding, agent, deploy, sources, drafts, publish, reports, settings };
+const views = { login, home, wizard, workspace, onboarding, agent, deploy, tasks, sources, drafts, publish, reports, settings };
 
 function bindEvents() {
   document.querySelectorAll("[data-route]").forEach((button) => {
@@ -704,6 +834,40 @@ function bindEvents() {
       render();
     } else {
       notify("所有 GEO 部署模块都已接入");
+    }
+  });
+
+  document.querySelector("#run-daily-crawl")?.addEventListener("click", async () => {
+    notify("正在运行每日公开抓取");
+
+    if (isPublicMode) {
+      const report = createPublicCrawlReport();
+      applyCrawlReport(report);
+      notify("公网预览抓取结果已生成");
+      render();
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/daily-crawl", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ config: createCompanyConfig() })
+      });
+      const report = await response.json();
+      if (!response.ok || !report.ok) throw new Error(report.error || "每日抓取失败");
+      applyCrawlReport(report);
+      notify("每日抓取已完成");
+      render();
+    } catch (error) {
+      state.dailyCrawl = {
+        ...(state.dailyCrawl || defaultState.dailyCrawl),
+        lastRunAt: new Date().toLocaleString("zh-CN", { hour12: false }),
+        lastStatus: `失败：${error.message}`
+      };
+      saveState();
+      notify(error.message);
+      render();
     }
   });
 

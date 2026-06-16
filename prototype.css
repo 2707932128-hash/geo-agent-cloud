@@ -810,6 +810,14 @@ h1 {
   grid-template-columns: minmax(0, 1fr) 82px minmax(220px, 0.8fr);
 }
 
+.task-row {
+  grid-template-columns: minmax(0, 1fr) 130px 80px 96px;
+}
+
+.module-row {
+  grid-template-columns: minmax(0, 1fr) 130px;
+}
+
 .score-chip {
   display: grid;
   width: 48px;
@@ -932,6 +940,14 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .main {
+    padding: 18px;
+  }
+
+  .top {
+    flex-direction: column;
+  }
+
   .side {
     grid-template-rows: auto auto auto;
   }
@@ -995,8 +1011,19 @@ textarea {
   .table-row,
   .deploy-row,
   .audit-row,
+  .task-row,
+  .module-row,
   .table.mini .table-row {
+    min-width: 0;
     grid-template-columns: 1fr;
+  }
+
+  .table-row > *,
+  .table-row div,
+  .table-row span {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .row-actions {

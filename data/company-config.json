@@ -1,0 +1,46 @@
+{
+  "companyName": "示例科技有限公司",
+  "industry": "企业服务",
+  "region": "上海 / 北京",
+  "goal": "获取咨询线索",
+  "siteUrl": "https://2707932128-hash.github.io/geo-agent-cloud/",
+  "sitemapUrl": "https://2707932128-hash.github.io/geo-agent-cloud/sitemap.xml",
+  "githubRepo": "https://github.com/2707932128-hash/geo-agent-cloud",
+  "keywords": "GEO 获客, AI 搜索优化, 生成式引擎优化",
+  "crawl": {
+    "enabled": true,
+    "schedule": "daily 10:15 Asia/Shanghai",
+    "maxSitemapPages": 4,
+    "respectRobots": true
+  },
+  "sources": [
+    {
+      "id": "src-owned",
+      "name": "业务官网",
+      "type": "自有来源",
+      "url": "https://2707932128-hash.github.io/geo-agent-cloud/",
+      "enabled": true
+    },
+    {
+      "id": "src-llms",
+      "name": "llms.txt",
+      "type": "GEO文件",
+      "url": "https://2707932128-hash.github.io/geo-agent-cloud/llms.txt",
+      "enabled": true
+    },
+    {
+      "id": "src-schema",
+      "name": "schema.json",
+      "type": "结构化数据",
+      "url": "https://2707932128-hash.github.io/geo-agent-cloud/schema.json",
+      "enabled": true
+    },
+    {
+      "id": "src-keyword",
+      "name": "关键词快照",
+      "type": "搜索意图",
+      "url": "keyword:GEO 获客",
+      "enabled": true
+    }
+  ]
+}

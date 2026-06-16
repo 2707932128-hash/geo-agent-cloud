@@ -1,0 +1,33 @@
+name: GEO Daily Crawl
+
+on:
+  schedule:
+    - cron: "15 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run GEO daily crawl
+        run: node scripts/geo-daily-crawl.js
+
+      - name: Upload crawl reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: geo-daily-crawl
+          path: |
+            reports/geo-daily-crawl.json
+            reports/geo-daily-crawl.md
