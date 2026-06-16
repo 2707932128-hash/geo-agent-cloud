@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GEO Agent Cloud Prototype</title>
+    <link rel="stylesheet" href="./prototype.css" />
+  </head>
+  <body>
+    <main class="cloud-shell">
+      <aside class="side">
+        <div class="brand">
+          <div class="brand-mark">G</div>
+          <div>
+            <strong>GEO Agent</strong>
+            <span>Cloud Workbench</span>
+          </div>
+        </div>
+
+        <nav class="nav" id="nav"></nav>
+
+        <div class="tenant">
+          <span>当前工作区</span>
+          <strong id="tenant-name">未登录</strong>
+          <span id="tenant-meta">请先进入演示账号</span>
+        </div>
+      </aside>
+
+      <section class="main">
+        <header class="top">
+          <div>
+            <p class="kicker">ONLINE GEO AGENT</p>
+            <h1 id="page-title">登录</h1>
+          </div>
+          <div class="actions">
+            <button type="button" data-route="onboarding">配置公司</button>
+            <button type="button" id="run-agent">运行智能体</button>
+          </div>
+        </header>
+
+        <section class="grid" id="view"></section>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./deploy-config.js"></script>
+    <script src="./prototype.js"></script>
+  </body>
+</html>

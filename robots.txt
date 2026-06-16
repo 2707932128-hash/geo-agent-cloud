@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://example.com/sitemap.xml
+
+# GEO note:
+# Keep public service pages, FAQ, docs, case studies and llms.txt accessible.

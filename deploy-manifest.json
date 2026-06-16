@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "builtAt": "2026-06-14T09:48:41.379Z",
+  "mode": "public-preview",
+  "dist": "D:\\C盘空间整理\\用户资料迁移_2026-05-30\\Documents\\GEO\\dist\\geo-agent-cloud",
+  "entry": "index.html",
+  "files": [
+    ".nojekyll",
+    "deploy-config.js",
+    "index.html",
+    "llms.txt",
+    "prototype.css",
+    "prototype.html",
+    "prototype.js",
+    "robots.txt",
+    "schema.json",
+    "vercel.json"
+  ]
+}
