@@ -1,4 +1,4 @@
-const STORAGE_KEY = "geo-agent-cloud-prototype-v2";
+const STORAGE_KEY = "geo-agent-cloud-v3-mist";
 
 const navItems = [
   ["login", "登录"],
@@ -19,7 +19,7 @@ const defaultState = {
   route: "login",
   loggedIn: false,
   pendingRoute: "",
-  readiness: 72,
+  readiness: 88,
   currentRun: null,
   tenant: {
     name: "示例科技有限公司",
@@ -29,18 +29,22 @@ const defaultState = {
     goal: "获取咨询线索",
     customers: "中小企业老板、市场负责人、增长负责人",
     questions: "GEO 获客怎么做？\n如何让 AI 更容易推荐我的公司？",
-    competitors: "https://competitor.example\nhttps://industry.example"
+    competitors: "https://competitor.invalid\nhttps://industry-feed.invalid"
   },
   siteConfig: {
-    siteUrl: "https://example.com",
-    sitemapUrl: "https://example.com/sitemap.xml",
-    githubRepo: "https://github.com/example/company-site",
+    siteUrl: "https://2707932128-hash.github.io/geo-agent-cloud/",
+    sitemapUrl: "https://2707932128-hash.github.io/geo-agent-cloud/sitemap.xml",
+    githubRepo: "https://github.com/2707932128-hash/geo-agent-cloud",
     keywords: "GEO 获客, AI 搜索优化, 生成式引擎优化"
   },
   lastGeoAudit: null,
-  deployPackage: null,
-  deployConnected: false,
-  monitorEnabled: false,
+  deployPackage: {
+    packageRoot: "github-pages://2707932128-hash/geo-agent-cloud",
+    siteUrl: "https://2707932128-hash.github.io/geo-agent-cloud/",
+    generatedAt: "2026-06-16T02:54:30Z"
+  },
+  deployConnected: true,
+  monitorEnabled: true,
   pipeline: [
     ["公司配置", 100],
     ["来源生成", 86],
@@ -49,9 +53,9 @@ const defaultState = {
     ["效果追踪", 32]
   ],
   sources: [
-    { id: "src-owned", name: "业务官网", type: "自有来源", url: "https://example.com", status: "正常", enabled: true },
-    { id: "src-comp", name: "竞品官网 A", type: "竞品来源", url: "https://competitor.example", status: "正常", enabled: true },
-    { id: "src-rss", name: "行业资讯源", type: "RSS", url: "https://industry.example/feed", status: "正常", enabled: true },
+    { id: "src-owned", name: "业务官网", type: "自有来源", url: "https://2707932128-hash.github.io/geo-agent-cloud/", status: "正常", enabled: true },
+    { id: "src-comp", name: "竞品官网 A", type: "竞品来源", url: "https://competitor.invalid", status: "正常", enabled: true },
+    { id: "src-rss", name: "行业资讯源", type: "RSS", url: "https://industry-feed.invalid/rss", status: "正常", enabled: true },
     { id: "src-keyword", name: "关键词快照", type: "搜索意图", url: "keyword:GEO 获客", status: "待审核", enabled: true }
   ],
   drafts: [
@@ -60,7 +64,7 @@ const defaultState = {
     { id: "draft-3", title: "如何让 AI 更容易理解你的服务？", channel: "公众号", status: "已通过" }
   ],
   publishRecords: [
-    { id: "pub-1", platform: "知乎", keyword: "GEO 获客", url: "https://example.com/post", leads: 4, status: "已发布" }
+    { id: "pub-1", platform: "知乎", keyword: "GEO 获客", url: "https://2707932128-hash.github.io/geo-agent-cloud/", leads: 4, status: "已发布" }
   ],
   runs: [
     {
@@ -79,11 +83,11 @@ const defaultState = {
     ["2026-06-12", "新增 22 条信号，发现 3 个高意图问题。"]
   ],
   geoDeploy: [
-    { id: "llms", name: "llms.txt", tool: "dotenvx/llmstxt + 自研生成器", status: "待接入", score: 62, detail: "从 sitemap 和核心页面生成 AI 可读入口。" },
+    { id: "llms", name: "llms.txt", tool: "dotenvx/llmstxt + 自研生成器", status: "已接入", score: 88, detail: "从 sitemap 和核心页面生成 AI 可读入口。" },
     { id: "markdown", name: "AI 可读 Markdown", tool: "continuedev/next-geo 思路", status: "设计中", score: 54, detail: "为 Next.js 页面提供 Markdown 版本和 AI bot 友好响应。" },
-    { id: "schema", name: "Schema / JSON-LD", tool: "自研模板", status: "待接入", score: 58, detail: "为公司、服务、FAQ、文章生成结构化数据。" },
-    { id: "audit", name: "GEO Audit", tool: "geo-optimizer-skill 思路", status: "待接入", score: 49, detail: "检查 AI bot、llms.txt、sitemap、schema、引用和页面可读性。" },
-    { id: "actions", name: "GitHub Actions", tool: "自研 CI/CD 模板", status: "待接入", score: 46, detail: "每次发布自动生成 GEO 文件并跑审计。" }
+    { id: "schema", name: "Schema / JSON-LD", tool: "自研模板", status: "已接入", score: 86, detail: "为公司、服务、FAQ、文章生成结构化数据。" },
+    { id: "audit", name: "GEO Audit", tool: "geo-optimizer-skill 思路", status: "已接入", score: 82, detail: "检查 AI bot、llms.txt、sitemap、schema、引用和页面可读性。" },
+    { id: "actions", name: "GitHub Actions", tool: "自研 CI/CD 模板", status: "已接入", score: 88, detail: "每次发布自动生成 GEO 文件并跑审计。" }
   ]
 };
 
